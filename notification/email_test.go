@@ -24,8 +24,14 @@ func TestSendEmail(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	// fmt.Println(template.TemplateInjector())
 	e2 := EmailMessage{
-		Body:     template.TemplateInjector(),
+		Body: template.TemplateInjector(
+			map[string]string{
+				"ExpireTime": "30",
+				"Otp":        "55567",
+				"Unit":       "minutes",
+			}, "../template/html/otp.html"),
 		Mime:     "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\"",
 		Receiver: []string{os.Getenv("SENDER_EMAIL")},
 		Subject:  "Testing Emails",

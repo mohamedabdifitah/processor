@@ -9,35 +9,33 @@ import (
 )
 
 type Pattern struct {
-	ExpireTime int
-	Otp        int
+	ExpireTime string
+	Otp        string
 	Unit       string
 }
-type Tag struct {
-	pattern string
-	replace string
+type Template struct {
+	Definition interface{}
+	path       string
+	Name       string
+}
+type Definition struct {
+	Key   string
+	Value interface{}
 }
 
-func TemplateInjector() string {
-	tmplt, err := htmltemplate.ParseFiles("html/otp.html")
+func (p *Template) String() {
+}
+func TemplateInjector(definition map[string]string, path string) string {
+	tmplt, err := htmltemplate.ParseFiles(path)
 	if err != nil {
 		log.Fatal(err)
-	}
-	// pattern that injects the template into values
-	event := Pattern{
-		ExpireTime: 30,
-		Otp:        55567,
-		Unit:       "minutes",
 	}
 	writer := new(bytes.Buffer)
-	// var writer []byte
-	// injection template writer
-	err = tmplt.Execute(writer, event)
+	err = tmplt.Execute(writer, definition)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return writer.String() + " "
-	// fmt.Println(writer)
+	return writer.String()
 }
 func TextTemplateInjector() {
 	// get text template
@@ -46,8 +44,8 @@ func TextTemplateInjector() {
 
 	}
 	event := Pattern{
-		ExpireTime: 30,
-		Otp:        55567,
+		ExpireTime: "30",
+		Otp:        "55567",
 		Unit:       "minutes",
 	}
 	err = tmpl.Execute(os.Stdout, event)
@@ -56,8 +54,16 @@ func TextTemplateInjector() {
 	}
 
 }
+func CUstomTemplateInjector() {
+	_, err := os.ReadFile("./template/html/reset_password.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// regexp.Compile()
+}
 
 // Text Template
 func main() {
-	TemplateInjector()
+	CUstomTemplateInjector()
+	// TemplateInjector()
 }
