@@ -2,68 +2,73 @@ package template
 
 import (
 	"bytes"
-	htmltemplate "html/template"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
-	texttemplate "text/template"
+	"text/template"
 )
 
-type Pattern struct {
-	ExpireTime string
-	Otp        string
-	Unit       string
-}
+type Templates map[string]Template
 type Template struct {
-	Definition interface{}
-	path       string
-	Name       string
-}
-type Definition struct {
-	Key   string
-	Value interface{}
+	Message string `json:"message"`
+	Mime    string `json:"mime"`
+	Path    string `json:"path"`
 }
 
-func (p *Template) String() {
-}
-func TemplateInjector(definition map[string]string, path string) string {
-	tmplt, err := htmltemplate.ParseFiles(path)
+func (templates Templates) LoadTemplates(path string) {
+	fileContent, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
+	}
+	defer fileContent.Close()
+	byteResult, err := ioutil.ReadAll(fileContent)
+	if err != nil {
+		fmt.Println(err)
+	}
+	var res Templates
+	err = json.Unmarshal([]byte(byteResult), &res)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for key, value := range res {
+		if value.Mime == "text/html" {
+			fileContent, err := os.Open(value.Path)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer fileContent.Close()
+			writer := new(bytes.Buffer)
+			byteResult, err := ioutil.ReadAll(fileContent)
+			if err != nil {
+				fmt.Println(err)
+			}
+			writer.Write(byteResult)
+			value.Message = writer.String()
+			templates[key] = value
+		}
+		templates[key] = value
+	}
+}
+func (templates Templates) TempelateInjector(key string, definition map[string]string) (string, error) {
+	temp := templates.Lookup(key)
+	tmpl, err := template.New(key).Parse(temp)
+	if err != nil {
+		return "", err
 	}
 	writer := new(bytes.Buffer)
-	err = tmplt.Execute(writer, definition)
+	err = tmpl.Execute(writer, definition)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return writer.String()
+	return writer.String(), nil
 }
-func TextTemplateInjector() {
-	// get text template
-	tmpl, err := texttemplate.New("test").Parse("{{.Count}} items are made of {{.Material}}")
-	if err != nil {
-
-	}
-	event := Pattern{
-		ExpireTime: "30",
-		Otp:        "55567",
-		Unit:       "minutes",
-	}
-	err = tmpl.Execute(os.Stdout, event)
-	if err != nil {
-		log.Fatal()
-	}
-
+func (templates Templates) Lookup(title string) string {
+	return templates[title].Message
 }
-func CUstomTemplateInjector() {
-	_, err := os.ReadFile("./template/html/reset_password.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-	// regexp.Compile()
+func NewTemplates() Templates {
+	return Templates{}
 }
 
-// Text Template
-func main() {
-	CUstomTemplateInjector()
-	// TemplateInjector()
-}
+var AllTemplates Templates = NewTemplates()

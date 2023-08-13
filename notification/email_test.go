@@ -24,14 +24,22 @@ func TestSendEmail(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	// fmt.Println(template.TemplateInjector())
+	template := template.AllTemplates
+	template.LoadTemplates("../template/template.json")
+
+	message, err := template.TempelateInjector(
+		"OtpTemplate",
+		map[string]string{
+			"ExpireTime": "30",
+			"Otp":        "55567",
+			"Unit":       "minutes",
+		},
+	)
+	if err != nil {
+		t.Error(err)
+	}
 	e2 := EmailMessage{
-		Body: template.TemplateInjector(
-			map[string]string{
-				"ExpireTime": "30",
-				"Otp":        "55567",
-				"Unit":       "minutes",
-			}, "../template/html/otp.html"),
+		Body:     message,
 		Mime:     "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\"",
 		Receiver: []string{os.Getenv("SENDER_EMAIL")},
 		Subject:  "Testing Emails",

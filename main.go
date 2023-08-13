@@ -5,7 +5,9 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/mohamedabdifitah/processor/db"
 	broker "github.com/mohamedabdifitah/processor/mq"
+	"github.com/mohamedabdifitah/processor/template"
 )
 
 func main() {
@@ -15,7 +17,8 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	template.AllTemplates.LoadTemplates("./template/text/text.json")
 	go broker.InitProducer()
-
+	db.InitRedisClient()
 	broker.InitClient()
 }

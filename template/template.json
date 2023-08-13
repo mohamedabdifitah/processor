@@ -1,0 +1,10 @@
+{
+  "BusyTemplate":{
+    "mime": "text/plain",
+    "message": "it been very busy at your area {{.Area}} : to review {{.Link}}"
+  },
+  "OtpTemplate":{
+    "mime":"text/html",
+    "path": "template/html/otp.html"
+  }
+}

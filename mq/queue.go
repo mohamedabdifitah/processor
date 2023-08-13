@@ -8,7 +8,7 @@ import (
 
 func NewOrderQueue() {
 	q, err := ch.QueueDeclare(
-		"new_order", // name
+		"new order", // name
 		false,       // durable
 		false,       // delete when unused
 		false,       // exclusive
