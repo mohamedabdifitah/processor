@@ -17,7 +17,7 @@ func TestSendPushNotification(t *testing.T) {
 		log.Fatal(err)
 	}
 	// This registration token comes from the client FCM SDKs.
-	registrationToken := os.Getenv("TEST_DEVICE_ID")
+	testdevice := os.Getenv("TEST_DEVICE_ID")
 	notification := messaging.Notification{
 		Title: "Welcome",
 		Body:  "welcome to the messaging ",
@@ -32,7 +32,7 @@ func TestSendPushNotification(t *testing.T) {
 			"screen":       "screenB",
 		},
 		Notification: &notification,
-		Token:        registrationToken,
+		Token:        testdevice,
 		Android: &messaging.AndroidConfig{
 			TTL: &times,
 		},
