@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/redis/go-redis/v9"
@@ -19,5 +20,8 @@ func InitRedisClient() {
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
+	if err := RedisClient.Ping(Ctx).Err(); err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("redis connection established")
 }

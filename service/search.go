@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/mohamedabdifitah/processor/db"
 	"github.com/redis/go-redis/v9"
@@ -25,4 +26,12 @@ func SearchDrivers(limit int, lat, lang, r float64, unit string, withdist bool) 
 		panic(err)
 	}
 	return value
+}
+
+// publish topic to redis channel
+func PublishTopic(topic string, message interface{}) {
+	err := db.RedisClient.Publish(db.Ctx, topic, message).Err()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

@@ -10,9 +10,22 @@ import (
 	"google.golang.org/api/option"
 )
 
+func SendMultipleNotifications(message *messaging.Message, rec []string) error {
+	if len(rec) == 0 {
+		return fmt.Errorf("there are no recievers")
+	}
+	for _, v := range rec {
+		message.Token = v
+		_, err := SendToastNotification(message)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 func SendToastNotification(message *messaging.Message) (*string, error) {
 	// parse template with token
-	basepath, err := filepath.Abs("../serviceAccountKey.json")
+	basepath, err := filepath.Abs("./serviceAccountKey.json")
 	if err != nil {
 		return nil, err
 	}

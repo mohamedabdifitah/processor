@@ -6,5 +6,13 @@
   "OtpTemplate":{
     "mime":"text/html",
     "path": "template/html/otp.html"
+  },
+  "NewOrder":{
+    "mime":"text/plain",
+    "message":"New Order : Go to {{.ResturantName}} ({{.from}}) ({{.to}})"
+  },
+  "OrderReady":{
+    "mime":"text/plain",
+    "message":"{{.Username}}'s Order is ready for pickup at {{.ResturantName}}. Go ahead and grab your order - make sure you check items as usual"
   }
 }
