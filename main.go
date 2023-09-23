@@ -7,19 +7,22 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/mohamedabdifitah/processor/controller"
 	"github.com/mohamedabdifitah/processor/db"
+	"github.com/mohamedabdifitah/processor/socket"
 	"github.com/mohamedabdifitah/processor/template"
 )
 
 func main() {
 	if os.Getenv("APP_ENV") == "development" {
-		err := godotenv.Load("local.env")
+		err := godotenv.Load(".env.local")
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
+
 	template.AllTemplates.LoadTemplates("./template/template.json")
 	db.InitRedisClient()
-	ListenTopic()
+	go ListenTopic()
+	socket.InitSocket()
 }
 func ListenTopic() {
 	topics := map[string]func([]byte){

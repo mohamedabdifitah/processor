@@ -28,6 +28,19 @@ func SearchDrivers(limit int, lat, lang, r float64, unit string, withdist bool) 
 	return value
 }
 
+// set driver location using redis
+func SetDriverLocation(name string, Longitude float64, Latitude float64) (int64, error) {
+	res, err := db.RedisClient.GeoAdd(db.Ctx, "driver", &redis.GeoLocation{
+		Name:      name,
+		Longitude: Longitude,
+		Latitude:  Latitude,
+	}).Result()
+	if err != nil {
+		return 0, err
+	}
+	return res, nil
+}
+
 // publish topic to redis channel
 func PublishTopic(topic string, message interface{}) {
 	err := db.RedisClient.Publish(db.Ctx, topic, message).Err()

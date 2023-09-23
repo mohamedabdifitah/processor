@@ -14,6 +14,7 @@ import (
 	"github.com/mohamedabdifitah/ecapi/db"
 	"github.com/mohamedabdifitah/processor/notification"
 	"github.com/mohamedabdifitah/processor/service"
+	"github.com/mohamedabdifitah/processor/socket"
 	"github.com/mohamedabdifitah/processor/template"
 )
 
@@ -37,6 +38,19 @@ func NewOrderHandler(msg []byte) {
 	var stringids string
 	for i, driver := range closestDrivers {
 		id := strings.Split(driver.Name, ":")[1]
+		fmt.Println(id)
+		user, ok := socket.BaseSockeServer.Users[id]
+		fmt.Println(ok)
+		if ok {
+			// {event:"new order",message:object}
+			var message struct {
+				Event   string      `json:"event"`
+				Message interface{} `json:"message"`
+			}
+			message.Event = "new order"
+			message.Message = order
+			user.Conn.WriteJSON(message)
+		}
 		if i == len(closestDrivers)-1 {
 			stringids = stringids + id
 			continue
@@ -44,18 +58,9 @@ func NewOrderHandler(msg []byte) {
 		stringids = stringids + id + ","
 
 	}
-	var body OrderBody = OrderBody{
-		Drivers: stringids,
-		Order:   order,
-	}
-	bodyjson, err := json.Marshal(body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	service.PublishTopic("socket-drives-order", bodyjson)
 	resp, err := http.Get("http://localhost/driver/list?ids=" + stringids)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 	defer resp.Body.Close()
 	writer := new(bytes.Buffer)
@@ -67,18 +72,18 @@ func NewOrderHandler(msg []byte) {
 	var devices []*db.Device
 	err = json.Unmarshal(byteResult, &devices)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	neworderTempalte, err := template.AllTemplates.TempelateInjector("NewOrder", map[string]string{
-		"ResturantName": "Qoobey labadhagax",
-		"from":          "Labadhagax",
-		"to":            "Medina",
+		"ResturantName": order.PickUpName,
+		"from":          order.PickupAddress,
+		"to":            order.DropOffAddress,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	notificationbody := messaging.Notification{
-		Title: fmt.Sprintf("New Order"),
+		Title: fmt.Sprintf("New Order" + order.PickUpName),
 		Body:  fmt.Sprintf(neworderTempalte),
 	}
 	// See documentation on defining a message payload.
@@ -101,9 +106,8 @@ func NewOrderHandler(msg []byte) {
 	}
 	err = notification.SendMultipleNotifications(message, list)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-	fmt.Println("success message")
 }
 func OrderAcceptedByResturantHandler(msg []byte) {
 }
