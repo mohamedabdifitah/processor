@@ -1,33 +1,24 @@
 package notification
 
 import (
-	"log"
 	"os"
 	"testing"
 
-	"github.com/joho/godotenv"
-	"github.com/mohamedabdifitah/processor/template"
+	"github.com/mohamedabdifitah/processor/utils"
 )
 
 func TestSendEmail(t *testing.T) {
-	err := godotenv.Load("../local.env")
-	if err != nil {
-		log.Fatal(err)
-	}
 	e := EmailMessage{
 		Body:     "Helllo world\n",
 		Receiver: []string{os.Getenv("SENDER_EMAIL")},
 		Subject:  "Testing Emails",
 		Host:     "smtp.gmail.com:587",
 	}
-	err = e.SendEmail()
+	err := e.SendEmail()
 	if err != nil {
 		t.Error(err)
 	}
-	template := template.AllTemplates
-	template.LoadTemplates("../template/template.json")
-
-	message, err := template.TempelateInjector(
+	message, err := utils.AllTemplates.TempelateInjector(
 		"OtpTemplate",
 		map[string]string{
 			"ExpireTime": "30",

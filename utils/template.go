@@ -1,4 +1,4 @@
-package template
+package utils
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"text/template"
 )
 
@@ -17,7 +18,7 @@ type Template struct {
 	Path    string `json:"path"`
 }
 
-func (templates Templates) LoadTemplates(path string) {
+func (templates Templates) LoadTemplates(path string, base string) {
 	fileContent, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
@@ -34,7 +35,8 @@ func (templates Templates) LoadTemplates(path string) {
 	}
 	for key, value := range res {
 		if value.Mime == "text/html" {
-			fileContent, err := os.Open(value.Path)
+			path := filepath.Join(base, value.Path)
+			fileContent, err := os.Open(path)
 			if err != nil {
 				log.Fatal(err)
 			}

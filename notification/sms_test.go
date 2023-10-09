@@ -10,5 +10,8 @@ func TestSendSms(t *testing.T) {
 		Message: "Hello world!",
 		To:      os.Getenv("TEST_PHONE"),
 	}
-	sms.Send()
+	err := sms.Send()
+	if err != nil {
+		t.Error(err)
+	}
 }

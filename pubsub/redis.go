@@ -1,4 +1,4 @@
-package db
+package pubsub
 
 import (
 	"context"
@@ -24,4 +24,12 @@ func InitRedisClient() {
 		log.Fatal(err)
 	}
 	fmt.Println("redis connection established")
+}
+
+// publish topic to redis channel
+func PublishTopic(topic string, message interface{}) {
+	err := RedisClient.Publish(Ctx, topic, message).Err()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

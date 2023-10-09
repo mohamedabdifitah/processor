@@ -5,7 +5,7 @@
   },
   "OtpTemplate":{
     "mime":"text/html",
-    "path": "template/html/otp.html"
+    "path": "assets/html/otp.html"
   },
   "NewOrder":{
     "mime":"text/plain",

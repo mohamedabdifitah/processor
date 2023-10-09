@@ -1,4 +1,4 @@
-package template
+package utils
 
 import (
 	"testing"
@@ -25,8 +25,7 @@ func TestTemplateInjector(t *testing.T) {
 	assert.Equal(t, Aftermessage, str)
 }
 func TestMain(m *testing.M) {
-	// templates = NewTemplates()
-	// templates.LoadTemplates("./text/text.json")
+
 	m.Run()
 }
 func TestLookUp(t *testing.T) {
