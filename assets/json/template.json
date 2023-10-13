@@ -9,7 +9,11 @@
   },
   "NewOrder":{
     "mime":"text/plain",
-    "message":"New Order : Go to {{.ResturantName}} ({{.from}}) ({{.to}})"
+    "message":"New Order : Go to {{.merchantname}}-{{.numberOfItems}} items \n Pick up (approx {{.pickupdistance}}) {{.pickupAddress}}  Drop off (approx {{.dropoffdistance}}) {{.dropoffAddress}}"
+  },
+  "NewOrderMer":{
+    "mime":"text/plain",
+    "message":"Hey {{.ResturantName}}, New Order from {{.customer_name}} please review the order and accept."
   },
   "OrderReady":{
     "mime":"text/plain",

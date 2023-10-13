@@ -23,23 +23,27 @@ func main() {
 }
 func ListenTopic() {
 	topics := map[string]func([]byte){
-		"new_order":                service.HandleNewOrder,
-		"order_accepted_resturant": service.HandleAcceptOrder,
-		"order_rejected_resturant": service.HandleMerchRejectOrder,
-		"order_canceled":           service.HandleCanceledOrder,
-		"driver_accept_order":      service.HandleDriverAcceptOrder,
-		"order_pickuped":           service.HandleOrderPickuped,
-		"order_delivered":          service.HandleOrderDelivered,
-		"driver_drop_order":        service.HandleDriverDropOrder,
+		"new_order":              service.HandleNewOrder,
+		"merchant_accpted_order": service.HandleAcceptOrder,
+		"order_canceled":         service.HandleCanceledOrder,
+		"driver_accept_order":    service.HandleDriverAcceptOrder,
+		"order_pickuped":         service.HandleOrderPickuped,
+		"order_delivered":        service.HandleOrderDelivered,
+		"order_dropped":          service.HandleDriverDropOrder,
+		"order_ready":            service.HandleOrderReady,
+		"order_preparing":        service.HandleOrderPreparing,
 	}
-	topic := pubsub.RedisClient.Subscribe(pubsub.Ctx, "new_order",
-		"order_accepted_resturant",
-		"order_rejected_resturant",
+	topic := pubsub.RedisClient.Subscribe(pubsub.Ctx,
+		"merchant_accpted_order",
 		"order_canceled",
-		"driver_accept_order",
+		"order_preparing",
+		"order_ready",
 		"order_pickuped",
 		"order_delivered",
-		"driver_drop_order")
+		"new_order",
+		"driver_accepted_order",
+		"order_dropped",
+	)
 	channel := topic.Channel()
 	for msg := range channel {
 		topics[msg.Channel]([]byte(msg.Payload))

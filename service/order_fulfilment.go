@@ -2,19 +2,32 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"os"
+	"strconv"
 	"strings"
 	"time"
+
+	"firebase.google.com/go/messaging"
+	notify "github.com/mohamedabdifitah/processor/notification"
+	"github.com/mohamedabdifitah/processor/utils"
 )
 
+type Item struct {
+	ItemExternalId string `json:"item_external_id"`
+	Quantity       uint   `json:"quantity" `
+	Price          uint   `json:"price" `
+}
 type Order struct {
 	Id                    string    `json:"id,omitempty"`
 	OrderValue            uint      `json:"order_value"  `
 	Type                  string    `json:"type" `
+	Items                 []Item    `json:"items"`
 	DropOffPhone          string    `json:"dropoff_phone" `
 	DropOffExteranlId     string    `json:"dropoff_external_id" `
 	DropOffContactName    string    `json:"dropoff_contact_name" `
-	DropOffTimeEstimated  time.Time `json:"dropoff_time_estimated" `
+	DropOffTimeEstimated  int       `json:"dropoff_time_estimated" `
 	DropOffAddress        string    `json:"dropoff_address" `
 	DroOffLocation        Location  `json:"dropoff_location" `
 	DropOffInstruction    string    `json:"dropoff_instructions" `
@@ -52,21 +65,448 @@ func HandleNewOrder(data []byte) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	closestDrivers := GetDrivers(order.PickUpLocation.Coordinates)
-	var stringids string
-	for i, driver := range closestDrivers {
-		id := strings.Split(driver.Name, ":")[1]
-		if i == len(closestDrivers)-1 {
-			stringids = stringids + id
-			continue
+	// merchant
+	merchant := GetInformationMer(order.PickUpExternalId)
+	notification := messaging.Notification{
+		Title: fmt.Sprintf("Hey %s , New Order", merchant.BusinessName),
+		Body:  fmt.Sprintf("New Order from %s please view items of order", order.DropOffContactName),
+	}
+	message := &messaging.Message{
+		Data: map[string]string{
+			"click_action": "FLUTTER_NOTIFICATION_CLICK",
+			"sound":        "default",
+			"status":       "done",
+			"screen":       "",
+		},
+		Notification: &notification,
+		Token:        merchant.Device.DeviceId,
+	}
+	_, err = notify.SendToastNotification(message)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytedata, err := json.Marshal(order)
+	ok := notify.SendWebhook(merchant.Metadata.WebhookEndpoint+"/new/order", bytedata)
+	if !ok {
+		log.Fatal(err)
+	}
+	// drivers
+	Drivers := GetDrivers(order)
+
+	for _, driver := range Drivers {
+		pickupDist := utils.CalculateDistance(order.PickUpLocation.Coordinates[0], order.PickUpLocation.Coordinates[1], driver.Location.Coordinates[0], driver.Location.Coordinates[1], "")
+		pickupDistance := utils.Converter(pickupDist)
+		dropoffdist := utils.CalculateDistance(order.DroOffLocation.Coordinates[0], order.DroOffLocation.Coordinates[1], driver.Location.Coordinates[0], driver.Location.Coordinates[1], "")
+		dropoffistance := utils.Converter(dropoffdist)
+		template, err := utils.AllTemplates.TempelateInjector("NewOrder", map[string]string{
+			"merchantname":    order.PickUpName,
+			"numberOfItems":   fmt.Sprintf("%s", strconv.Itoa(len(order.Items))),
+			"pickupdistance":  pickupDistance,
+			"pickupAddress":   order.PickupAddress,
+			"dropoffdistance": dropoffistance,
+			"dropoffAddress":  order.DropOffAddress,
+		})
+		if err != nil {
+			log.Fatal(err)
 		}
-		stringids = stringids + id + ","
+		notification = messaging.Notification{
+			Title: fmt.Sprintf("New Delivery"),
+			Body:  template,
+		}
+		message = &messaging.Message{
+			Data: map[string]string{
+				"click_action": "FLUTTER_NOTIFICATION_CLICK",
+				"sound":        "default",
+				"status":       "done",
+				"screen":       "",
+			},
+			Notification: &notification,
+			Token:        driver.Device.DeviceId,
+		}
+		_, err = notify.SendToastNotification(message)
+		if err != nil {
+			log.Fatal(err)
+		}
+		bytedata, err := json.Marshal(order)
+		ok := notify.SendWebhook(driver.Metadata.WebhookEndpoint+"/new/order", bytedata)
+		if !ok {
+			log.Fatal(err)
+		}
 	}
 }
-func HandleAcceptOrder(data []byte) {}
-func HandleDriverAcceptOrder(data []byte)
-func HandleMerchRejectOrder(data []byte) {}
-func HandleCanceledOrder(data []byte)    {}
-func HandleDriverDropOrder(data []byte)  {}
-func HandleOrderDelivered(data []byte)   {}
-func HandleOrderPickuped(data []byte)    {}
+func HandleAcceptOrder(data []byte) {
+	var order Order
+	err := json.Unmarshal(data, &order)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// customer
+	customer := GetInformationCustomer(order.DropOffExteranlId)
+	notification := messaging.Notification{
+		Title: "Order is Accepted",
+		Body:  fmt.Sprintf("your order for %s is accepted", order.PickUpName),
+	}
+	message := &messaging.Message{
+		Data: map[string]string{
+			"click_action": "FLUTTER_NOTIFICATION_CLICK",
+			"sound":        "default",
+			"status":       "done",
+			"screen":       "",
+		},
+		Notification: &notification,
+		Token:        customer.Device.DeviceId,
+	}
+	_, err = notify.SendToastNotification(message)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytedata, err := json.Marshal(order)
+	ok := notify.SendWebhook(customer.Metadata.WebhookEndpoint+"/merchant/accept", bytedata)
+	if !ok {
+		log.Fatal(err)
+	}
+}
+func HandleDriverAcceptOrder(data []byte) {
+	var order Order
+	err := json.Unmarshal(data, &order)
+	if err != nil {
+		log.Fatal(err)
+	}
+	driver := GetInformationDriver(order.DriverExternalId)
+	// customer
+	customer := GetInformationCustomer(order.DropOffExteranlId)
+	notification := messaging.Notification{
+		Title: "Driver accept your order",
+		Body:  fmt.Sprintf("your order for %s is accepted by driver %s", order.PickUpName, driver.GivenName),
+	}
+	message := &messaging.Message{
+		Data: map[string]string{
+			"click_action": "FLUTTER_NOTIFICATION_CLICK",
+			"sound":        "default",
+			"status":       "done",
+			"screen":       "",
+		},
+		Notification: &notification,
+		Token:        customer.Device.DeviceId,
+	}
+	_, err = notify.SendToastNotification(message)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytedata, err := json.Marshal(order)
+	ok := notify.SendWebhook(customer.Metadata.WebhookEndpoint+"/driver/accept", bytedata)
+	if !ok {
+		log.Fatal(err)
+	}
+}
+func HandleCanceledOrder(data []byte) {
+	var order Order
+	err := json.Unmarshal(data, &order)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	reason := strings.Split(order.CancelReason, " ")[0]
+	if reason == "CANCEL_FROM_MERCHANT" {
+		customer := GetInformationCustomer(order.DropOffExteranlId)
+		notification := messaging.Notification{
+			Title: "Order canceled",
+			Body:  fmt.Sprintf("your order from %s is canceled due to %s", order.PickUpName, strings.Split(order.CancelReason, " ")[1]),
+		}
+		message := &messaging.Message{
+			Data: map[string]string{
+				"click_action": "FLUTTER_NOTIFICATION_CLICK",
+				"sound":        "default",
+				"status":       "done",
+				"screen":       "",
+			},
+			Notification: &notification,
+			Token:        customer.Device.DeviceId,
+		}
+		_, err = notify.SendToastNotification(message)
+		if err != nil {
+			log.Fatal(err)
+		}
+		bytedata, err := json.Marshal(order)
+		ok := notify.SendWebhook(customer.Metadata.WebhookEndpoint+"/order/cancel", bytedata)
+		if !ok {
+			log.Fatal(err)
+		}
+	} else if reason == "CANCEL_FROM_CUSTOMER" {
+		// merchant
+		merchant := GetInformationMer(order.PickUpExternalId)
+		notification := messaging.Notification{
+			Title: "Order canceled",
+			Body:  fmt.Sprint("%s cancels his order", order.DropOffContactName),
+		}
+		message := &messaging.Message{
+			Data: map[string]string{
+				"click_action": "FLUTTER_NOTIFICATION_CLICK",
+				"sound":        "default",
+				"status":       "done",
+				"screen":       "",
+			},
+			Notification: &notification,
+			Token:        merchant.Device.DeviceId,
+		}
+		_, err = notify.SendToastNotification(message)
+		if err != nil {
+			log.Fatal(err)
+		}
+		bytedata, err := json.Marshal(order)
+		ok := notify.SendWebhook(merchant.Metadata.WebhookEndpoint+"/order/cancel", bytedata)
+		if !ok {
+			log.Fatal(err)
+		}
+	}
+}
+func HandleDriverDropOrder(data []byte) {
+	var order Order
+	err := json.Unmarshal(data, &order)
+	if err != nil {
+		log.Fatal(err)
+	}
+	driver := GetInformationDriver(order.DriverExternalId)
+	// merchant
+	merchant := GetInformationMer(order.PickUpExternalId)
+	notification := messaging.Notification{
+		Title: "Driver cancels delivery",
+		Body:  fmt.Sprint("%s cancels his order of %s", driver.GivenName, order.DropOffContactName),
+	}
+	message := &messaging.Message{
+		Data: map[string]string{
+			"click_action": "FLUTTER_NOTIFICATION_CLICK",
+			"sound":        "default",
+			"status":       "done",
+			"screen":       "",
+		},
+		Notification: &notification,
+		Token:        merchant.Device.DeviceId,
+	}
+	_, err = notify.SendToastNotification(message)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytedata, err := json.Marshal(order)
+	ok := notify.SendWebhook(merchant.Metadata.WebhookEndpoint+"/order/cancel", bytedata)
+	if !ok {
+		log.Fatal(err)
+	}
+	// drivers
+	Drivers := GetDrivers(order)
+
+	for _, driver := range Drivers {
+		pickupDist := utils.CalculateDistance(order.PickUpLocation.Coordinates[0], order.PickUpLocation.Coordinates[1], driver.Location.Coordinates[0], driver.Location.Coordinates[1], "")
+		pickupDistance := utils.Converter(pickupDist)
+		dropoffdist := utils.CalculateDistance(order.DroOffLocation.Coordinates[0], order.DroOffLocation.Coordinates[1], driver.Location.Coordinates[0], driver.Location.Coordinates[1], "")
+		dropoffistance := utils.Converter(dropoffdist)
+		template, err := utils.AllTemplates.TempelateInjector("NewOrder", map[string]string{
+			"merchantname":    order.PickUpName,
+			"numberOfItems":   fmt.Sprintf("%s", strconv.Itoa(len(order.Items))),
+			"pickupdistance":  pickupDistance,
+			"pickupAddress":   order.PickupAddress,
+			"dropoffdistance": dropoffistance,
+			"dropoffAddress":  order.DropOffAddress,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		notification := messaging.Notification{
+			Title: fmt.Sprintf("New Delivery"),
+			Body:  template,
+		}
+		message := &messaging.Message{
+			Data: map[string]string{
+				"click_action": "FLUTTER_NOTIFICATION_CLICK",
+				"sound":        "default",
+				"status":       "done",
+				"screen":       "",
+			},
+			Notification: &notification,
+			Token:        driver.Device.DeviceId,
+		}
+		_, err = notify.SendToastNotification(message)
+		if err != nil {
+			log.Fatal(err)
+		}
+		bytedata, err := json.Marshal(order)
+		ok := notify.SendWebhook(driver.Metadata.WebhookEndpoint+"/new/order", bytedata)
+		if !ok {
+			log.Fatal(err)
+		}
+	}
+}
+func HandleOrderDelivered(data []byte) {
+	var order Order
+	err := json.Unmarshal(data, &order)
+	if err != nil {
+		log.Fatal(err)
+	}
+	merchant := GetInformationMer(order.PickUpExternalId)
+	notification := messaging.Notification{
+		Title: "Order is delivered",
+		Body:  fmt.Sprint("%s order is  delivered", order.DropOffContactName),
+	}
+	message := &messaging.Message{
+		Data: map[string]string{
+			"click_action": "FLUTTER_NOTIFICATION_CLICK",
+			"sound":        "default",
+			"status":       "done",
+			"screen":       "",
+		},
+		Notification: &notification,
+		Token:        merchant.Device.DeviceId,
+	}
+	_, err = notify.SendToastNotification(message)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytedata, err := json.Marshal(order)
+	ok := notify.SendWebhook(merchant.Metadata.WebhookEndpoint+"/order/delivered", bytedata)
+	if !ok {
+		log.Fatal(err)
+	}
+	// customer
+	driver := GetInformationDriver(order.DriverExternalId)
+	customer := GetInformationCustomer(order.DropOffExteranlId)
+	notification = messaging.Notification{
+		Title: "Order is delivered",
+		Body:  fmt.Sprintf("your driver %s dropped your order, please check your order. if you have trouble finding something please call us %s ", driver.GivenName, os.Getenv("TEST_PHONE")),
+	}
+	message = &messaging.Message{
+		Data: map[string]string{
+			"click_action": "FLUTTER_NOTIFICATION_CLICK",
+			"sound":        "default",
+			"status":       "done",
+			"screen":       "",
+		},
+		Notification: &notification,
+		Token:        customer.Device.DeviceId,
+	}
+	_, err = notify.SendToastNotification(message)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytedata, err = json.Marshal(order)
+	ok = notify.SendWebhook(customer.Metadata.WebhookEndpoint+"/order/delivered", bytedata)
+	if !ok {
+		log.Fatal(err)
+	}
+}
+func HandleOrderPickuped(data []byte) {
+	var order Order
+	err := json.Unmarshal(data, &order)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// customer
+	driver := GetInformationDriver(order.DriverExternalId)
+	customer := GetInformationCustomer(order.DropOffExteranlId)
+	notification := messaging.Notification{
+		Title: "Order is pickuped",
+		Body:  fmt.Sprintf("your driver %s pick up your order it will reach you %d minutes", driver.GivenName, order.DropOffTimeEstimated/60),
+	}
+	message := &messaging.Message{
+		Data: map[string]string{
+			"click_action": "FLUTTER_NOTIFICATION_CLICK",
+			"sound":        "default",
+			"status":       "done",
+			"screen":       "",
+		},
+		Notification: &notification,
+		Token:        customer.Device.DeviceId,
+	}
+	_, err = notify.SendToastNotification(message)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytedata, err := json.Marshal(order)
+	ok := notify.SendWebhook(customer.Metadata.WebhookEndpoint+"/order/delivered", bytedata)
+	if !ok {
+		log.Fatal(err)
+	}
+}
+func HandleOrderReady(data []byte) {
+	var order Order
+	err := json.Unmarshal(data, &order)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// customer
+	driver := GetInformationDriver(order.DriverExternalId)
+	notification := messaging.Notification{
+		Title: "Order is ready to delivered",
+		Body:  fmt.Sprintf("%s's Order is ready for pickup at %s. Go ahead and grab your order - make sure you check items as usual", order.DropOffContactName, order.PickUpName),
+	}
+	message := &messaging.Message{
+		Data: map[string]string{
+			"click_action": "FLUTTER_NOTIFICATION_CLICK",
+			"sound":        "default",
+			"status":       "done",
+			"screen":       "",
+		},
+		Notification: &notification,
+		Token:        driver.Device.DeviceId,
+	}
+	_, err = notify.SendToastNotification(message)
+	if err != nil {
+		log.Fatal(err)
+	}
+	sms := notify.SMS{
+		To:      order.DriverPhone,
+		Message: fmt.Sprintf("%s's Order is ready for pickup at %s. Go ahead and grab your order - make sure you check items as usual", order.DropOffContactName, order.PickUpName),
+	}
+	err = sms.Send()
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytedata, err := json.Marshal(order)
+	ok := notify.SendWebhook(driver.Metadata.WebhookEndpoint+"/order/ready", bytedata)
+	if !ok {
+		log.Fatal(err)
+	}
+}
+func HandleOrderPreparing(data []byte) {
+	var order Order
+	err := json.Unmarshal(data, &order)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// customer
+	driver := GetInformationDriver(order.DriverExternalId)
+	if err != nil {
+		log.Fatal(err)
+	}
+	notification := messaging.Notification{
+		Title: "Order is processing",
+		Body:  fmt.Sprintf("%s's Order is almost ready for pickup at %d minutes", order.DropOffContactName, order.PickupEstimatedTime/60),
+	}
+	message := &messaging.Message{
+		Data: map[string]string{
+			"click_action": "FLUTTER_NOTIFICATION_CLICK",
+			"sound":        "default",
+			"status":       "done",
+			"screen":       "",
+		},
+		Notification: &notification,
+		Token:        driver.Device.DeviceId,
+	}
+	_, err = notify.SendToastNotification(message)
+	if err != nil {
+		log.Fatal(err)
+	}
+	sms := notify.SMS{
+		To:      order.DriverPhone,
+		Message: fmt.Sprintf("%s's Order is almost ready for pickup at %d minutes", order.DropOffContactName, order.PickupEstimatedTime/60),
+	}
+	err = sms.Send()
+	if err != nil {
+		log.Fatal(err)
+	}
+	bytedata, err := json.Marshal(order)
+	ok := notify.SendWebhook(driver.Metadata.WebhookEndpoint+"/order/preparing", bytedata)
+	if !ok {
+		log.Fatal(err)
+	}
+}
