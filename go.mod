@@ -4,9 +4,15 @@ go 1.19
 
 require (
 	firebase.google.com/go v3.13.0+incompatible
+	github.com/elastic/go-elasticsearch/v8 v8.10.1
 	github.com/joho/godotenv v1.5.1
 	github.com/twilio/twilio-go v1.10.1
 	google.golang.org/api v0.134.0
+)
+
+require (
+	github.com/elastic/elastic-transport-go/v8 v8.3.0 // indirect
+	github.com/elastic/go-elasticsearch v0.0.0 // indirect
 )
 
 require (

@@ -18,8 +18,9 @@ func main() {
 		}
 	}
 	utils.AllTemplates.LoadTemplates("assets/json/template.json", "")
-	pubsub.InitRedisClient()
-	ListenTopic()
+	service.InitElasticSearch()
+	// pubsub.InitRedisClient()
+	// ListenTopic()
 }
 func ListenTopic() {
 	topics := map[string]func([]byte){

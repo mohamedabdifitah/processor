@@ -21,7 +21,7 @@ func InitRedisClient() {
 		DB:       0,  // use default DB
 	})
 	if err := RedisClient.Ping(Ctx).Err(); err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	fmt.Println("redis connection established")
 }

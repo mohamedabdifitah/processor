@@ -3,6 +3,8 @@ package notification
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
@@ -25,7 +27,12 @@ func SendMultipleNotifications(message *messaging.Message, rec []string) error {
 
 // send muluticast
 func SendToastNotification(message *messaging.Message) (*string, error) {
-	opt := option.WithCredentialsFile("unknown")
+	wd, _ := os.Getwd()
+	path := filepath.Join(wd + "/assets/json/serviceAccountKey.json")
+	if filepath.Base(wd) == "notification" {
+		path = filepath.Join(filepath.Dir(wd) + "/assets/json/serviceAccountKey.json")
+	}
+	opt := option.WithCredentialsFile(path)
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing app: %v\n", err)
