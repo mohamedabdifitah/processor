@@ -11,10 +11,10 @@ import (
 
 func TestSendPushNotification(t *testing.T) {
 	// This registration token comes from the client FCM SDKs.
-	testdevice := os.Getenv("TEST_DEVICE_ID")
+	// testdevice := os.Getenv("TEST_DEVICE_ID")
 	notification := messaging.Notification{
 		Title: "Welcome",
-		Body:  "welcome to the messaging ",
+		Body:  "Marwan welcome",
 	}
 	message := &messaging.Message{
 		Data: map[string]string{
@@ -24,7 +24,7 @@ func TestSendPushNotification(t *testing.T) {
 			"screen":       "screenB",
 		},
 		Notification: &notification,
-		Token:        testdevice,
+		Token:        os.Getenv("TEST_DEVICE_ID"),
 	}
 	res, err := SendToastNotification(message)
 	if err != nil {

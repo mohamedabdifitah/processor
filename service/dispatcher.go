@@ -90,7 +90,7 @@ func GetDrivers(order Order) []Driver {
 
 func GetInformationMer(id string) Merchant {
 	var merchant Merchant
-	req, err := http.Get(fmt.Sprintf(os.Getenv("SERVER_URI")+"merchant/get/%s", id))
+	req, err := http.Get(fmt.Sprintf(os.Getenv("SERVER_URI")+"/merchant/get/%s", id))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func GetInformationMer(id string) Merchant {
 }
 func GetInformationCustomer(id string) Customer {
 	var customer Customer
-	req, err := http.Get(fmt.Sprintf(os.Getenv("SERVER_URI")+"merchant/get/%s", id))
+	req, err := http.Get(fmt.Sprintf(os.Getenv("SERVER_URI")+"/merchant/get/%s", id))
 	if err != nil {
 		log.Fatal(err)
 	}

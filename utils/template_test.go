@@ -6,8 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var templates Templates
-
 func TestTemplateInjector(t *testing.T) {
 	message := "hello world {{.Name}}"
 	Aftermessage := "hello world Mohamed"

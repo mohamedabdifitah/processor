@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -63,7 +62,7 @@ func HandleNewOrder(data []byte) {
 	var order Order
 	err := json.Unmarshal(data, &order)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	// merchant
 	merchant := GetInformationMer(order.PickUpExternalId)
@@ -83,12 +82,12 @@ func HandleNewOrder(data []byte) {
 	}
 	_, err = notify.SendToastNotification(message)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	bytedata, err := json.Marshal(order)
 	ok := notify.SendWebhook(merchant.Metadata.WebhookEndpoint+"/new/order", bytedata)
 	if !ok {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	// drivers
 	Drivers := GetDrivers(order)
@@ -107,7 +106,7 @@ func HandleNewOrder(data []byte) {
 			"dropoffAddress":  order.DropOffAddress,
 		})
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		notification = messaging.Notification{
 			Title: fmt.Sprintf("New Delivery"),
@@ -125,12 +124,12 @@ func HandleNewOrder(data []byte) {
 		}
 		_, err = notify.SendToastNotification(message)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		bytedata, err := json.Marshal(order)
 		ok := notify.SendWebhook(driver.Metadata.WebhookEndpoint+"/new/order", bytedata)
 		if !ok {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 	}
 }
@@ -138,7 +137,7 @@ func HandleAcceptOrder(data []byte) {
 	var order Order
 	err := json.Unmarshal(data, &order)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	// customer
 	customer := GetInformationCustomer(order.DropOffExteranlId)
@@ -158,19 +157,19 @@ func HandleAcceptOrder(data []byte) {
 	}
 	_, err = notify.SendToastNotification(message)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	bytedata, err := json.Marshal(order)
 	ok := notify.SendWebhook(customer.Metadata.WebhookEndpoint+"/merchant/accept", bytedata)
 	if !ok {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 }
 func HandleDriverAcceptOrder(data []byte) {
 	var order Order
 	err := json.Unmarshal(data, &order)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	driver := GetInformationDriver(order.DriverExternalId)
 	// customer
@@ -191,19 +190,19 @@ func HandleDriverAcceptOrder(data []byte) {
 	}
 	_, err = notify.SendToastNotification(message)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	bytedata, err := json.Marshal(order)
 	ok := notify.SendWebhook(customer.Metadata.WebhookEndpoint+"/driver/accept", bytedata)
 	if !ok {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 }
 func HandleCanceledOrder(data []byte) {
 	var order Order
 	err := json.Unmarshal(data, &order)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
 	reason := strings.Split(order.CancelReason, " ")[0]
@@ -225,12 +224,12 @@ func HandleCanceledOrder(data []byte) {
 		}
 		_, err = notify.SendToastNotification(message)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		bytedata, err := json.Marshal(order)
 		ok := notify.SendWebhook(customer.Metadata.WebhookEndpoint+"/order/cancel", bytedata)
 		if !ok {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 	} else if reason == "CANCEL_FROM_CUSTOMER" {
 		// merchant
@@ -251,12 +250,12 @@ func HandleCanceledOrder(data []byte) {
 		}
 		_, err = notify.SendToastNotification(message)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		bytedata, err := json.Marshal(order)
 		ok := notify.SendWebhook(merchant.Metadata.WebhookEndpoint+"/order/cancel", bytedata)
 		if !ok {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 	}
 }
@@ -264,7 +263,7 @@ func HandleDriverDropOrder(data []byte) {
 	var order Order
 	err := json.Unmarshal(data, &order)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	driver := GetInformationDriver(order.DriverExternalId)
 	// merchant
@@ -285,12 +284,12 @@ func HandleDriverDropOrder(data []byte) {
 	}
 	_, err = notify.SendToastNotification(message)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	bytedata, err := json.Marshal(order)
 	ok := notify.SendWebhook(merchant.Metadata.WebhookEndpoint+"/order/cancel", bytedata)
 	if !ok {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	// drivers
 	Drivers := GetDrivers(order)
@@ -309,7 +308,7 @@ func HandleDriverDropOrder(data []byte) {
 			"dropoffAddress":  order.DropOffAddress,
 		})
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		notification := messaging.Notification{
 			Title: fmt.Sprintf("New Delivery"),
@@ -327,12 +326,12 @@ func HandleDriverDropOrder(data []byte) {
 		}
 		_, err = notify.SendToastNotification(message)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 		bytedata, err := json.Marshal(order)
 		ok := notify.SendWebhook(driver.Metadata.WebhookEndpoint+"/new/order", bytedata)
 		if !ok {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 	}
 }
@@ -340,7 +339,7 @@ func HandleOrderDelivered(data []byte) {
 	var order Order
 	err := json.Unmarshal(data, &order)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	merchant := GetInformationMer(order.PickUpExternalId)
 	notification := messaging.Notification{
@@ -359,12 +358,12 @@ func HandleOrderDelivered(data []byte) {
 	}
 	_, err = notify.SendToastNotification(message)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	bytedata, err := json.Marshal(order)
 	ok := notify.SendWebhook(merchant.Metadata.WebhookEndpoint+"/order/delivered", bytedata)
 	if !ok {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	// customer
 	driver := GetInformationDriver(order.DriverExternalId)
@@ -385,19 +384,19 @@ func HandleOrderDelivered(data []byte) {
 	}
 	_, err = notify.SendToastNotification(message)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	bytedata, err = json.Marshal(order)
 	ok = notify.SendWebhook(customer.Metadata.WebhookEndpoint+"/order/delivered", bytedata)
 	if !ok {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 }
 func HandleOrderPickuped(data []byte) {
 	var order Order
 	err := json.Unmarshal(data, &order)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	// customer
 	driver := GetInformationDriver(order.DriverExternalId)
@@ -418,19 +417,19 @@ func HandleOrderPickuped(data []byte) {
 	}
 	_, err = notify.SendToastNotification(message)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	bytedata, err := json.Marshal(order)
 	ok := notify.SendWebhook(customer.Metadata.WebhookEndpoint+"/order/delivered", bytedata)
 	if !ok {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 }
 func HandleOrderReady(data []byte) {
 	var order Order
 	err := json.Unmarshal(data, &order)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	// customer
 	driver := GetInformationDriver(order.DriverExternalId)
@@ -450,7 +449,7 @@ func HandleOrderReady(data []byte) {
 	}
 	_, err = notify.SendToastNotification(message)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	sms := notify.SMS{
 		To:      order.DriverPhone,
@@ -458,25 +457,25 @@ func HandleOrderReady(data []byte) {
 	}
 	err = sms.Send()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	bytedata, err := json.Marshal(order)
 	ok := notify.SendWebhook(driver.Metadata.WebhookEndpoint+"/order/ready", bytedata)
 	if !ok {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 }
 func HandleOrderPreparing(data []byte) {
 	var order Order
 	err := json.Unmarshal(data, &order)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
 	// customer
 	driver := GetInformationDriver(order.DriverExternalId)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	notification := messaging.Notification{
 		Title: "Order is processing",
@@ -494,7 +493,7 @@ func HandleOrderPreparing(data []byte) {
 	}
 	_, err = notify.SendToastNotification(message)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	sms := notify.SMS{
 		To:      order.DriverPhone,
@@ -502,11 +501,11 @@ func HandleOrderPreparing(data []byte) {
 	}
 	err = sms.Send()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 	bytedata, err := json.Marshal(order)
 	ok := notify.SendWebhook(driver.Metadata.WebhookEndpoint+"/order/preparing", bytedata)
 	if !ok {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 }

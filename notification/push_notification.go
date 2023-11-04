@@ -35,7 +35,7 @@ func SendToastNotification(message *messaging.Message) (*string, error) {
 	opt := option.WithCredentialsFile(path)
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing app: %v\n", err)
+		return nil, fmt.Errorf("error initializing app: %v \n ", err)
 	}
 	// Obtain a messaging.Client from the App.
 	ctx := context.Background()
