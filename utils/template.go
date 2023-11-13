@@ -72,5 +72,7 @@ func (templates Templates) Lookup(title string) string {
 func NewTemplates() Templates {
 	return Templates{}
 }
-
-var AllTemplates Templates = NewTemplates()
+func CurrentTemplates() Templates {
+	templates := NewTemplates()
+	return templates
+}

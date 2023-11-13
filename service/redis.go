@@ -1,4 +1,4 @@
-package pubsub
+package service
 
 import (
 	"context"
@@ -21,7 +21,10 @@ func InitRedisClient() {
 		DB:       0,                       // use default DB
 	})
 	if err := RedisClient.Ping(Ctx).Err(); err != nil {
-		fmt.Println(err)
+		if os.Getenv("APP_ENV") == "development" {
+			fmt.Println(err)
+		}
+		log.Fatal(err)
 	}
 	fmt.Println("redis connection established")
 }

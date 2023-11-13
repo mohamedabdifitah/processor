@@ -26,7 +26,7 @@ func SendMultipleNotifications(message *messaging.Message, rec []string) error {
 }
 
 // send muluticast
-func SendToastNotification(message *messaging.Message) (*string, error) {
+func SendToastNotification(message *messaging.Message) (string, error) {
 	wd, _ := os.Getwd()
 	path := filepath.Join(wd + "/assets/json/serviceAccountKey.json")
 	if filepath.Base(wd) == "notification" {
@@ -35,19 +35,19 @@ func SendToastNotification(message *messaging.Message) (*string, error) {
 	opt := option.WithCredentialsFile(path)
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing app: %v \n ", err)
+		return "", fmt.Errorf("error initializing app: %v \n ", err)
 	}
 	// Obtain a messaging.Client from the App.
 	ctx := context.Background()
 	client, err := app.Messaging(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error getting messaging client: %v", err)
+		return "", fmt.Errorf("error getting messaging client: %v", err)
 	}
 	// Send a message to the device corresponding to the provided
 	// registration token.
 	response, err := client.Send(ctx, message)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return &response, nil
+	return response, nil
 }

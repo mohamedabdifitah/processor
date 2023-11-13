@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/joho/godotenv"
-	"github.com/mohamedabdifitah/processor/utils"
 )
 
 func TestMain(t *testing.M) {
@@ -18,6 +17,5 @@ func TestMain(t *testing.M) {
 			log.Fatal(err)
 		}
 	}
-	utils.AllTemplates.LoadTemplates(filepath.Join(filepath.Dir(wd)+"/assets/json/template.json"), filepath.Dir(wd))
 	t.Run()
 }

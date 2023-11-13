@@ -7,6 +7,10 @@
     "mime":"text/html",
     "path": "assets/html/otp.html"
   },
+  "ResetPassword":{
+    "mime":"text/html",
+    "path": "assets/html/reset.html"
+  },
   "NewOrder":{
     "mime":"text/plain",
     "message":"New Order : Go to {{.merchantname}}-{{.numberOfItems}} items \n Pick up (approx {{.pickupdistance}}) {{.pickupAddress}}  Drop off (approx {{.dropoffdistance}}) {{.dropoffAddress}}"

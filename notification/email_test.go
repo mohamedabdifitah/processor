@@ -2,6 +2,7 @@ package notification
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/mohamedabdifitah/processor/utils"
@@ -18,7 +19,10 @@ func TestSendEmail(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	message, err := utils.AllTemplates.TempelateInjector(
+	wd, _ := os.Getwd()
+	templates := utils.CurrentTemplates()
+	templates.LoadTemplates(filepath.Join(filepath.Dir(wd)+"/assets/json/template.json"), filepath.Dir(wd))
+	message, err := templates.TempelateInjector(
 		"OtpTemplate",
 		map[string]string{
 			"ExpireTime": "30",

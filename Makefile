@@ -2,7 +2,7 @@
 export APP_ENV = development
 $ENV:APP_ENV = "development"
 dev:
-	watcher
+	nodemon --exec go run . --signal SIGTERM
 test:
 	go test ./...
 build:
