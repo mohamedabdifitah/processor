@@ -18,5 +18,6 @@ func main() {
 	}
 	service.InitRedisClient()
 	go notification.Initsocket()
-	service.InitAmqp()
+	go service.InitAmqp()
+	service.InitSynchronizer()
 }

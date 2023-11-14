@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"firebase.google.com/go/messaging"
-	"github.com/mohamedabdifitah/processor/notification"
 	notify "github.com/mohamedabdifitah/processor/notification"
 )
 
@@ -41,7 +40,7 @@ func SendWebsocketNotification(event string, body interface{}, rec string, socke
 	return nil
 }
 func SendNotifictionSms(message string, to string) error {
-	sms := notification.SMS{
+	sms := notify.SMS{
 		Message: message,
 		To:      to,
 	}
@@ -53,7 +52,7 @@ func SendNotifictionSms(message string, to string) error {
 }
 
 func SendEmailNotification(message string, subject string, rec ...string) error {
-	e := notification.EmailMessage{
+	e := notify.EmailMessage{
 		Body:     message,
 		Mime:     "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\"",
 		Receiver: rec,
