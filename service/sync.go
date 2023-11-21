@@ -54,7 +54,6 @@ func InitSynchronizer() {
 	// Keep the program running
 	select {}
 }
-
 func syncCollection(mongoClient *mongo.Client, meiliSearchIndex *meilisearch.Index, collectionName string) {
 	collection := mongoClient.Database(mongoDatabaseName).Collection(collectionName)
 
@@ -162,6 +161,7 @@ func CreateDocument(index *meilisearch.Index, changeEvent bson.M) {
 	var id string = RemoveObjectID(fmt.Sprintf("%s", document["_id"]))
 	delete(document, "_id")
 	document["id"] = id
+	RemoveSensitiveFields(document)
 	task, err := index.AddDocuments(document)
 	if err != nil {
 		fmt.Println(err)
@@ -191,5 +191,8 @@ func RemoveObjectID(objectid string) string {
 	return ""
 }
 func RemoveSensitiveFields(data bson.M) {
-	// var fields []string = []string{"password", ""}
+	var fields []string = []string{"password", "business_email", "business_phone", "metadata", "device"}
+	for _, field := range fields {
+		delete(data, field)
+	}
 }
